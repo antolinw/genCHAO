@@ -44,33 +44,36 @@ def run_init(cfg):
     cfg.epsi_t = cfg.zeroField()
     cfg.B_hat = cfg.zeroField()
 
-    cfg.lepsi_hat =  np.sqrt(cfg.S2) * fftnoise(cfg, scalar = True)
+    cfg.lepsi_hat, noise0 =  fftnoise(cfg, scalar = True)
+    cfg.lepsi_hat *=  np.sqrt(cfg.S2)
     cfg.epsi_t = epsilon(cfg.lepsi_hat,cfg)
     if cfg.new_spTimeGMC:
-        cfg.B_hat = FFT_CMG_noise(cfg.epsi_t,cfg)
+        cfg.B_hat = FFT_CMG_noise(cfg.epsi_t,cfg,noise_cor=noise0)[0]
     else:
-        cfg.B_hat = fftnoise(cfg)
+        cfg.B_hat = fftnoise(cfg,noise_cor=noise0)[0]
     
 def run_1step(cfg):
     # ---- OU process for B ----
     if cfg.new_spTimeGMC:
-        cfg.B_hat = cfg.exp_B * cfg.B_hat + cfg.noise_B * FFT_CMG_noise(cfg.epsi_t,cfg)
+        noise_B_hat, noise1 = FFT_CMG_noise(cfg.epsi_t,cfg)
     else:
-        cfg.B_hat = cfg.exp_B * cfg.B_hat + cfg.noise_B * fftnoise(cfg)
+        noise_B_hat, noise1 = fftnoise(cfg)
+    cfg.B_hat = cfg.exp_B * cfg.B_hat + cfg.noise_B * noise_B_hat
     # ---- OU process for epsilon ----
-    cfg.lepsi_hat = cfg.exp_B  * cfg.lepsi_hat + cfg.noise_B * np.sqrt(cfg.S2) * fftnoise(cfg, scalar = True)
+    cfg.lepsi_hat = cfg.exp_B  * cfg.lepsi_hat + cfg.noise_B * np.sqrt(cfg.S2) * fftnoise(cfg, scalar = True, noise_cor = noise1)[0]
     cfg.epsi_t = epsilon(cfg.lepsi_hat,cfg)
 
 
-def fftnoise(cfg, scalar = False):
-    xi = cfg.whiteNoise(scalar)
+def fftnoise(cfg, scalar = False, noise_cor = None):
+    xi = cfg.correlated_noise(noise_cor,scalar)
     B_hat = cfg.FFT(xi)
     cfg.cleanAliasing(B_hat)
 
-    return B_hat
+    return B_hat, xi
 
-def FFT_CMG_noise(epsi,cfg):
-    return FFT_CMG_from_noise(cfg.whiteNoise(),epsi,cfg)
+def FFT_CMG_noise(epsi,cfg, noise_cor = None):
+    xi = cfg.correlated_noise(noise_cor)
+    return FFT_CMG_from_noise(xi,epsi,cfg), xi
 
 def CMG_velocity(cfg, intermittency = True):
     # ---- Real space ----

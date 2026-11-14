@@ -36,6 +36,7 @@ class SimulationConfig:
     rho_s: float = 1.66            # spatial KE spectrum slope (]0,3[ in 2D; ]0,2[ in 3D)
     gamma_t: float = rho_s         # temporal KE spectrum slope
     c1 = (rho_s - 1) / 2.          # fractal exponent
+    c3 = 0.0                       # skewness coefficient (not used in this version)
 
     D3 = 1
     T_LS: float = L_LS / D3
@@ -59,7 +60,8 @@ class Parameters(SimulationConfig):
         else:
             print(f"Using consistent parameters: " \
                   + f"dim = {self.dim}, c1 = {self.c1}, c2 = {self.c2}, rho_s = {self.rho_s}, gamma_t = {self.gamma_t}")
-
+        if self.c3 <0 or self.c3 > 1:
+            raise ValueError("c3 must be between 0 and 1.")
         N = 2 ** self.n_order
         self.N = N
         self.PN = N//2                                 # aliased wavevector index
@@ -78,6 +80,7 @@ class Parameters(SimulationConfig):
         np.random.seed(0)
 
         if (self.method == 'Wavelet'): # Wavelet method
+            print('ACHTUNG. we may miss approx coef (or at least large scales) for epsilon !?!') 
             Jmax = self.n_order - np.log2(self.wave_n_wm)
             Jmax = int(np.floor( Jmax))
             J_LS = np.log2(self.L_LS / self.dx)
@@ -184,11 +187,13 @@ class Parameters(SimulationConfig):
         noise_B = np.sqrt(1 - exp_B**2)
 
         if self.dim == 3 and not self.wavelet:
+            if self.c3>0 : raise ValueError("Not coded yet.")
             self.K = self.K[:,:,:,:,np.newaxis]
             self.A = self.A[:,:,:,:,np.newaxis]
             exp_B = exp_B[:,:,:,:,np.newaxis]
             noise_B = noise_B[:,:,:,:,np.newaxis]
         if self.wavelet:
+            if self.c3>0 : raise ValueError("Not coded yet.")
             exp_B = self.to_subbands(exp_B)
             noise_B = self.to_subbands(noise_B)
 
@@ -278,6 +283,15 @@ class Parameters(SimulationConfig):
         else:
             raise ValueError("Incorrect dim")
         return xi
+        
+    def correl_noise(self,noise,noise_cor):
+        if noise_cor is not None:
+            return np.sqrt(1 - self.c3**2) * noise + self.c3 * noise_cor
+        else:
+            return noise
+        
+    def correlated_noise(self,noise_cor,scalar = False):
+        return self.correl_noise(self.whiteNoise(scalar),noise_cor)
 
     def normalizing(self,V_x, V_y, V_z, stream_z, vort_z):
         if self.normaliz_fields:
