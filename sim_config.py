@@ -78,6 +78,7 @@ class Parameters(SimulationConfig):
         np.random.seed(0)
 
         if (self.method == 'Wavelet'): # Wavelet method
+            print('ACHTUNG. we may miss approx coef (or at least large scales) for epsilon !?!') 
             Jmax = self.n_order - np.log2(self.wave_n_wm)
             Jmax = int(np.floor( Jmax))
             J_LS = np.log2(self.L_LS / self.dx)
