@@ -29,13 +29,14 @@ The framework combines Gaussian Multiplicative Chaos for spatial multifractal co
 
 ## Authors
 
-William Antolin, Merveille Talla, Valentin Resseguier
+William Antolin, Merveille Talla, Valentin Resseguier, Carlos Granero Belinchon
 
 ## Citation
 
 If you use DEDECHAO in your research, please cite this repository and the following publications
 
 Ruffenach, Wandrille, and Laurent Chevillard. "The spatio-temporal statistical structure of the turbulent dissipation field and its stochastic representation as a Gaussian multiplicative chaos." Comptes Rendus. Physique 27.G1 (2026): 275-305.
+
 Ruffenach, Wandrille, and Laurent Chevillard. "Spatio-temporal Multifractal fields for fluid turbulence: exact results for a one-dimensional model." Preprint
 
 ## License
