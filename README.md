@@ -27,6 +27,10 @@ Main dependencies include [PyTorch](https://pytorch.org/) and [pytorch_wavelets]
 
 The framework combines Gaussian Multiplicative Chaos for spatial multifractal construction with Ornstein–Uhlenbeck processes for temporal dynamics.
 
+## Authors
+
+William Antolin, Merveille Talla, Valentin Resseguier
+
 ## Citation
 
 If you use DEDECHAO in your research, please cite this repository and the following publications
