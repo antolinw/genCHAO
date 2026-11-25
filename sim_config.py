@@ -1,7 +1,7 @@
 # config.py
 import numpy as np
 import torch
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from pytorch_wavelets import DWTForward, DWTInverse
 from wavelet_nd import DWTForwardND, DWTInverseND
 from Bi_OU_core import run_simulation
@@ -9,7 +9,7 @@ from Bi_OU_core_Wavelet import run_simulation_W
 
 @dataclass
 class SimulationConfig:
-    # --------- Numerical ---------
+    # --------- Numerical (free parameters) ---------
     n_order: int = 9              # N = 2^n_order = number of space steps along x
     N_steps: int = 512            # number of time steps
     n_ens: int = 1                # ensemble size
@@ -20,36 +20,45 @@ class SimulationConfig:
     J: int = n_order                    # Number of level of decomposition for wavelet method
     wave: str = wave_base + str(wave_n_wm)
     mode: str = 'periodization'
-    new_spTimeGMC = True          # Wandrille's method for spatiotemporal GMC
+    new_spTimeGMC: bool = True          # Wandrille's method for spatiotemporal GMC
 
-    output_type = 0               # 0 (default) : V_x, V_y, V_z, stream_z, vort_z, epsi
+    output_type: int = 0               # 0 (default) : V_x, V_y, V_z, stream_z, vort_z, epsi
                                   # 1 : V_x, V_y
                                   # 2 : stream_z
-    normaliz_fields = 0        # Set to False if log-spectrum offset is fitted
+    normaliz_fields: int = 0        # Set to False if log-spectrum offset is fitted
 
-    # --------- Physical ---------
+    # --------- Physical (free parameters)---------
     Lx: float = 1                  # domain size
-    L_LS: float = Lx         # large spatial scale
-
     dim: float = 2.0               # spatial dimension
     c2: float = 0.025              # intermittency coefficient (must be < c1 /2, ]0,0.5[ in 2D)
     rho_s: float = 1.66            # spatial KE spectrum slope (]0,3[ in 2D; ]0,2[ in 3D)
-    gamma_t: float = rho_s         # temporal KE spectrum slope
-    c1 = (rho_s - 1) / 2.          # fractal exponent
-    c3 = 0.0                       # skewness coefficient (not used in this version)
-
-    D3 = 1
-    T_LS: float = L_LS / D3
-    tau_0B: float = T_LS
+    c3: float = 0.0                       # skewness coefficient (not used in this version)
+    D3: float = 1.
     z_eps: float = 1.0
 
-    # --------- Matérn parameters ---------
-    nu_m: float = c1
-    l_m: float = (np.sqrt(2 * nu_m) * L_LS) / (2 * np.pi)
+    # --------- Derived parameters ---------
+    L_LS: float = field(init=False)       # large spatial scale
+    gamma_t: float = field(init=False)    # temporal KE spectrum slope
+    c1: float = field(init=False)         # fractal exponent
+    T_LS: float = field(init=False)       # large temporal scale
+    tau_0B: float = field(init=False)     # large temporal scale for OU process of B  
+    nu_m: float = field(init=False)       # Matérn differentiability
+    l_m: float = field(init=False)        # Matérn coherence's length
 
+    def __post_init__(self):   
+        self.L_LS = self.Lx
+        self.gamma_t = self.rho_s
+        self.c1 = (self.rho_s - 1) / 2.
+        self.T_LS = self.L_LS / self.D3
+        self.tau_0B = self.T_LS
+        # --------- Matérn parameters ---------
+        self.nu_m = self.c1
+        self.l_m = (np.sqrt(2 * self.nu_m) * self.L_LS) / (2 * np.pi)
+
+@dataclass
 class Parameters(SimulationConfig): 
-    def __init__(self):
-        super().__init__()
+    def __post_init__(self):
+        super().__post_init__()  # recalcule d'abord tous les champs dérivés
         if (self.c1 >= 1.0):
             print("ACHTUNG : c1 >=1.0 i.e the velocity field is diffenrentiable.")
             print("This is not realistic for turbulence.")

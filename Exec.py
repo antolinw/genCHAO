@@ -1,5 +1,6 @@
 import numpy as np
 import matplotlib.pyplot as plt
+from dataclasses import replace
 from scipy.stats import kurtosis, skew
 from sim_config import Parameters
 from plot import plot_surface, plot_isotropic_spatial_psd, \
@@ -7,8 +8,16 @@ from plot import plot_surface, plot_isotropic_spatial_psd, \
                  plot_spectrum_mean_std, zeta_n, plot_structure_functions, plot_increment_pdfs, \
                  plot_structure_functions_temporal, save_spiky_field_gif_matplotlib
 
-       
-cfg = Parameters()
+
+
+# If you apply manual changes to the configuration, you can do it here. Note that it only works for the parameters that are not derived from others.
+# For example:
+#cfg0 = Parameters()
+#cfg = replace(cfg0, rho_s=2.2) # Modify the rho_s parameter to 2.2 while keeping other parameters unchanged.
+
+# Else, load the configuration:
+cfg = Parameters()  # Load the configuration from sim_config.py
+
 c1 = cfg.c1
 c2 = cfg.c2
 rho = cfg.rho_s
